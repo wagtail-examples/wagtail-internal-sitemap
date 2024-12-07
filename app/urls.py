@@ -6,6 +6,8 @@ from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
 from app.search import views as search_views
+from model_inspector.api.urls import urlpatterns as api_urlpatterns
+from model_inspector.urls import urlpatterns as model_inspector_urlpatterns
 
 urlpatterns = [
     path("django-admin/", admin.site.urls),
@@ -14,6 +16,9 @@ urlpatterns = [
     path("search/", search_views.search, name="search"),
     # Remove if not required
     path("style-guide/", include("app.style_guide.urls")),
+    # API
+    path("model-inspector-api-v1/", include(api_urlpatterns)),
+    path("model-inspector-api-v2/", include(model_inspector_urlpatterns)),
 ]
 
 

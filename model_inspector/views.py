@@ -33,22 +33,6 @@ def filter_exclude_queryset(qs=None):
     else:
         return qs
 
-    # if hasattr(settings, "MODEL_INSPECTOR_EXCLUDE") and settings.MODEL_INSPECTOR_EXCLUDE and qs is None:
-    #     exclude_app_model = settings.MODEL_INSPECTOR_EXCLUDE
-    #     return ContentType.objects.exclude(
-    #         app_label__in=[app_label for app_label, _ in exclude_app_model],
-    #         model__in=[model for _, model in exclude_app_model],
-    #     )
-    # elif qs is not None:
-    #     exclude_app_model = settings.MODEL_INSPECTOR_EXCLUDE
-    #     return qs.exclude(
-    #         app_label__in=[app_label for app_label, _ in exclude_app_model],
-    #         model__in=[model for _, model in exclude_app_model],
-    #     )
-    # else:
-
-    # return ContentType.objects.all()
-
 
 class ModelInspectorAdminURLFinder(AdminURLFinder):
     def get_listing_url(self, instance):
