@@ -13,7 +13,7 @@ from wagtail.admin.widgets.button import HeaderButton
 from wagtail.contrib.redirects.models import Redirect
 from wagtail.documents.models import Document
 from wagtail.images.models import Image
-from wagtail.models import Collection, Task, Workflow
+from wagtail.models import Collection, Site, Task, Workflow
 
 
 def filter_exclude_queryset(qs=None):
@@ -245,5 +245,37 @@ class IndexView(generic.IndexView):
                     "model": contenttype.model,
                 },
             )
+
+            # SPECIAL CASE: Settings
+            # TODO something still isn't right here
+            bases = [base.__name__ for base in type(instance).__bases__]
+            site = Site.objects.get(is_default_site=True)
+            if "BaseGenericSetting" in bases:
+                pk = contenttype.model_class().load(request_or_site=site).pk
+                admin_instance_url = f"""/admin/settings/{contenttype.app_label}/{contenttype.model}/{pk}/"""
+                contenttype.frontend_url = render_to_string(
+                    "model_inspector/fragments/does_not_exist.html",
+                )
+                contenttype.listing = render_to_string(
+                    "model_inspector/fragments/does_not_exist.html",
+                )
+                contenttype.admin_edit_url = render_to_string(
+                    "model_inspector/fragments/link_secondary.html",
+                    {"url": admin_instance_url},
+                )
+
+            if "BaseSiteSetting" in bases:
+                pk = contenttype.model_class().for_site(site).pk
+                admin_instance_url = f"""/admin/settings/{contenttype.app_label}/{contenttype.model}/{pk}/"""
+                contenttype.frontend_url = render_to_string(
+                    "model_inspector/fragments/does_not_exist.html",
+                )
+                contenttype.listing = render_to_string(
+                    "model_inspector/fragments/does_not_exist.html",
+                )
+                contenttype.admin_edit_url = render_to_string(
+                    "model_inspector/fragments/link_secondary.html",
+                    {"url": admin_instance_url},
+                )
 
         return ctx
