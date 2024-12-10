@@ -188,12 +188,85 @@ class IndexView(generic.IndexView):
         ctx = super().get_context_data(*args, **kwargs)
 
         for contenttype in ctx["object_list"]:
+
+            # ACTIONS
+            contenttype.actions = render_to_string(
+                "model_inspector/fragments/check_button.html",
+            )
+
+            # EXCLUDE
+            contenttype.exclude = render_to_string(
+                "model_inspector/fragments/copy_button.html",
+                {
+                    "app_label": contenttype.app_label,
+                    "model": contenttype.model,
+                },
+            )
+
+            # Get the first instance of the model
             instance = contenttype.model_class().objects.first()
 
-            # SPECIAL CASE: Collection
+            # SPECIAL CASE: Settings
+            # Only the admin url makes sense for settings
+            # Single out the settings models using the base classes
+            bases = [base.__name__ for base in type(instance).__bases__]
+            if "BaseGenericSetting" in bases or "BaseSiteSetting" in bases:
+                # There is a redirect to the settings page that should be used
+                # so dont' need a instance to work with settings
+                admin_instance_url = (
+                    f"""/admin/settings/{contenttype.app_label}/{contenttype.model}/"""
+                )
+                # FRONTEND URL
+                contenttype.frontend_url = render_to_string(
+                    "model_inspector/fragments/does_not_exist.html",
+                )
+                # LISTING URL
+                contenttype.listing = render_to_string(
+                    "model_inspector/fragments/does_not_exist.html",
+                )
+                # ADMIN URL
+                contenttype.admin_edit_url = render_to_string(
+                    "model_inspector/fragments/link_secondary.html",
+                    {"url": admin_instance_url},
+                )
+
+                continue
+
+            # SPECIAL CASE: Collection get the correct instance
             if isinstance(instance, Collection):
                 root = Collection.get_first_root_node()
                 instance = root.get_children().first()
+
+                # ADMIN URL
+                admin_instance_url = admin_url_finder.get_edit_url(instance)
+                if admin_instance_url:
+                    contenttype.admin_edit_url = render_to_string(
+                        "model_inspector/fragments/link_secondary.html",
+                        {"url": admin_instance_url},
+                    )
+                else:
+                    contenttype.admin_edit_url = render_to_string(
+                        "model_inspector/fragments/does_not_exist.html",
+                    )
+
+                # FRONTEND URL
+                contenttype.frontend_url = render_to_string(
+                    "model_inspector/fragments/does_not_exist.html",
+                )
+
+                # LISTING URL
+                listing_instance_url = admin_url_finder.get_listing_url(instance)
+                if listing_instance_url:
+                    contenttype.listing = render_to_string(
+                        "model_inspector/fragments/link_secondary.html",
+                        {"url": listing_instance_url},
+                    )
+                else:
+                    contenttype.listing = render_to_string(
+                        "model_inspector/fragments/does_not_exist.html",
+                    )
+
+                continue
 
             # FRONTEND URL
             frontend_instance_url = None
@@ -231,19 +304,5 @@ class IndexView(generic.IndexView):
                 contenttype.listing = render_to_string(
                     "model_inspector/fragments/does_not_exist.html",
                 )
-
-            # ACTIONS
-            contenttype.actions = render_to_string(
-                "model_inspector/fragments/check_button.html",
-            )
-
-            # EXCLUDE
-            contenttype.exclude = render_to_string(
-                "model_inspector/fragments/copy_button.html",
-                {
-                    "app_label": contenttype.app_label,
-                    "model": contenttype.model,
-                },
-            )
 
         return ctx
